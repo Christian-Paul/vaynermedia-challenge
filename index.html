@@ -20,7 +20,11 @@
     </div>
 
     <main>
-        <div class='table'>
+        <div 
+            class='table' 
+            ondragover='dragover_handler(event);' 
+            ondrop='drop_handler(event);'
+        >
             <div class='table__row table__header'>
                 <div class='table__cell table__cell--short'>id</div>
                 <div class='table__cell'>title</div>
@@ -28,7 +32,11 @@
         </div>
 
 
-        <div class='table'>
+        <div 
+            class='table' 
+            ondragover='dragover_handler(event);' 
+            ondrop='drop_handler(event);'
+        >
             <div class='table__row table__header'>
                 <div class='table__cell table__cell--short'>id</div>
                 <div class='table__cell'>title</div>
