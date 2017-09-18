@@ -2,6 +2,8 @@ body {
     font-family: 'Helvetica', 'Arial', sans-serif;
     padding: 0 50px;
     background-color: #EFEFEF;
+    display: flex;
+    flex-direction: column;
 }
 
 main {
@@ -9,10 +11,14 @@ main {
     justify-content: space-between;
 }
 
-
+.searches {
+    display: flex;
+    justify-content: space-between;
+}
 
 .search {
     padding-bottom: 30px;
+    width: 48%;
 }
 .search__label {
     font-weight: bold;
@@ -61,4 +67,9 @@ main {
 }
 .table__cell:last-child {
     margin-right: 0px;
+}
+
+.hidden {
+    visibility: hidden !important;
+    position: fixed !important;
 }

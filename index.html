@@ -13,11 +13,19 @@
 <body>
     <h1>Vaynermedia Front-End Code Test</h1>
 
-    <div class='search'>
-        <label class='search__label'>Search</label>
-        <input class='search__input' type='text'></input>
-        <button class='search__button' type='submit'>Submit</button>
-    </div>
+    <section class='searches'>
+        <div class='search'>
+            <label class='search__label'>Search</label>
+            <input id='search-input-left' class='search__input' type='text'></input>
+            <button id='search-button-left' class='search__button' type='submit' onClick='filterAlbumsHandler;'>Submit</button>
+        </div>
+
+        <div class='search'>
+            <label class='search__label'>Search</label>
+            <input id='search-input-right' class='search__input' type='text'></input>
+            <button id='search-button-right' class='search__button' type='submit' onClick='filterAlbumsHandler;'>Submit</button>
+        </div>
+    </section>
 
     <main>
         <div 

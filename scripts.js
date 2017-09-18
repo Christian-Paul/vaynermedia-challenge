@@ -62,7 +62,6 @@ function drop_handler(ev) {
 		// if api update failed, display alert
 		alert('Something went wrong')
 	})
-
 }
 
 function dragend_handler(ev) {
@@ -77,7 +76,66 @@ function dragend_handler(ev) {
 	ev.dataTransfer.clearData();
 }
 
+function filterAlbums(tableRows, searchText) {
+	// iterate through each row, searching for albums that don't match
+	for(let i = 0; i < tableRows.length; i++) {
+		let row = tableRows[i];
+		let rowAlbumName = $(row).find(':last-child')[0].innerHTML.toLowerCase();
+
+		// if an album name doesn't match search, hide it
+		$(row).removeClass('hidden');
+		if(rowAlbumName.indexOf(searchText) === -1) {
+			$(row).addClass('hidden');
+		}
+	}
+}
+
+function searchInputKeyPress(ev) {
+	// get relevant table, rows, and search text
+	if(ev.key === 'Enter') {
+		let targetTable, searchText;
+		if(ev.target.id === 'search-input-left') {
+			targetTable = $('.table')[0];
+			searchText = $('#search-input-left').val().toLowerCase();
+		} else {
+			targetTable = $('.table')[1];
+			searchText = $('#search-input-right').val().toLowerCase();
+		}
+
+		let tableRows = $(targetTable).find('.table__row:not(.table__header)')
+	
+		filterAlbums(tableRows, searchText);
+	}
+}
+
+function searchButtonClick(ev) {
+	// get relevant table, rows, and search text
+	let targetTable, searchText;
+	if(ev.target.id === 'search-button-left') {
+		targetTable = $('.table')[0];
+		searchText = $('#search-input-left').val().toLowerCase();
+	} else {
+		targetTable = $('.table')[1];
+		searchText = $('#search-input-right').val().toLowerCase();
+	}
+
+	let tableRows = $(targetTable).find('.table__row:not(.table__header)')
+
+	filterAlbumsHandler(tableRows, searchText);
+}
+
 $(function() {
+	// add search event listener for filtering
+	let $searchButtons = $('.search__button');
+	for(let i = 0; i < $searchButtons.length; i++) {
+		$searchButtons[i].addEventListener('click', searchButtonClick);
+	}
+
+	// add search event listener for filtering
+	let $searchInputs = $('.search__input');
+	for(let i = 0; i < $searchInputs.length; i++) {
+		$searchInputs[i].addEventListener('keypress', searchInputKeyPress);
+	}
 
 	// get user and album data concurrently 
 	$.when(
