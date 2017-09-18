@@ -1,6 +1,11 @@
 const apiAddr = 'https://jsonplaceholder.typicode.com';
 const $document = $(document);
 
+let multiSelect = {
+	seletedTableId: null,
+	seletedAlbums: []
+}
+
 function updateCandyStripe() {
 	let leftTableRows = $('.table').first().find('.table__row:not(.table__header)');
 	let rightTableRows = $('.table').last().find('.table__row:not(.table__header)');
@@ -24,6 +29,48 @@ function updateCandyStripe() {
 	}
 }
 
+function albumClickHandler(ev) {
+	// if ctrl was held while clicking, add this album to multiselect
+	if(ev.ctrlKey) {
+		// get album and table info
+		let albumId = $(ev.srcElement).closest('.table__row').attr('id');
+		let tableId = $(ev.srcElement).closest('.table').attr('id');
+		let albumTitle = $(`#${albumId}`).find('div:last-child')[0].innerHTML;
+
+		// if multiselect is currently storing albums from the clicked table
+		// or isn't storing albums from a particular table
+		// deal with the clicked album
+		if(tableId === multiSelect.seletedTableId || multiSelect.seletedTableId === null) {
+			multiSelect.seletedTableId = tableId;
+
+			let albumIdx = multiSelect.seletedAlbums.findIndex(album => album.albumId === albumId);
+			// if it is being tracked, remove it
+			if(albumIdx !== -1) {
+				multiSelect.seletedAlbums = [
+					...multiSelect.seletedAlbums.slice(0, albumIdx),
+					...multiSelect.seletedAlbums.slice(albumIdx+1)
+				]
+			} else {	
+				// if the album isn't already being tracked, add it
+				multiSelect.seletedAlbums.push({
+					albumId: albumId,
+					albumTitle: albumTitle
+				});
+			}
+		} else {
+			// if the target album is from a different table
+			// clear multiselect state and add current target
+			multiSelect = {
+				seletedTableId: tableId,
+				seletedAlbums: [{
+					albumId: albumId,
+					albumTitle: albumTitle
+				}]
+			}
+		}
+	}
+}
+
 function dragstartHandler(ev) {
 	ev.dataTransfer.dropEffect = 'move';
 
@@ -31,6 +78,7 @@ function dragstartHandler(ev) {
 	let originTableId = $(ev.target).closest('.table').attr('id') 
 	let originUserId = originTableId.split('-')[1];
 	let albumId = ev.srcElement.id;
+	let albumTitle = $(`#${albumId}`).find('div:last-child')[0].innerHTML;
 
 	// obtain receiving table info
 	let userTables = $('div.table');
@@ -47,7 +95,7 @@ function dragstartHandler(ev) {
 	ev.dataTransfer.setData('application/json', 
 	                        JSON.stringify({
 	                        	albumId: albumId.split('-')[1],
-	                        	title: $(`#${albumId}`).find('div:last-child')[0].innerHTML,
+	                        	title: albumTitle,
 	                        	originUserId: originUserId,
 	                        	receivingTableId: receivingTableId
 	                        }));
@@ -205,6 +253,7 @@ $(function() {
 						draggable='true' 
 						ondragstart='dragstartHandler(event);'
 						ondragend='dragendHandler(event);'
+						onclick='albumClickHandler(event);'
 						class='${rowClass}'
 						id=${'album-' + albumId}
 					>
@@ -225,6 +274,7 @@ $(function() {
 						draggable='true' 
 						ondragstart='dragstartHandler(event);'
 						ondragend='dragendHandler(event);'
+						onclick='albumClickHandler(event);'
 						class='${rowClass}'
 						id=${'album-' + albumId}
 					>
