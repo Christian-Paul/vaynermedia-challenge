@@ -1,6 +1,29 @@
 const apiAddr = 'https://jsonplaceholder.typicode.com';
 const $document = $(document);
 
+function updateCandyStripe() {
+	let leftTableRows = $('.table').first().find('.table__row:not(.table__header)');
+	let rightTableRows = $('.table').last().find('.table__row:not(.table__header)');
+
+	for(let i = 0; i < leftTableRows.length; i++) {
+		let row = leftTableRows.eq(i);
+		row.removeClass('red-row');
+
+		if(i % 2) {
+			row.addClass('red-row');
+		}
+	}
+
+	for(let i = 0; i < rightTableRows.length; i++) {
+		let row = rightTableRows.eq(i);
+		row.removeClass('red-row');
+
+		if(i % 2) {
+			row.addClass('red-row');
+		}
+	}
+}
+
 function dragstartHandler(ev) {
 	ev.dataTransfer.dropEffect = 'move';
 
@@ -59,6 +82,7 @@ function dropHandler(ev) {
 		// remove row from old table and append it to the new one
 		$(`#album-${albumId}`).remove();
 		$receivingTable.append(htmlData);
+		updateCandyStripe();
 	}).fail(() => {
 		// if api update failed, display alert
 		alert('Something went wrong')
