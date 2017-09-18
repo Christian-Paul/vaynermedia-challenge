@@ -46,15 +46,6 @@ main {
 }
 .drop-zone {
     position: relative;
-/*
-    outline: 2px dashed #777;
-    outline-offset: 4px;
-    animation-duration: 1s;
-    animation-name: animateOutline;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease;
-    animation-direction: alternate;
-*/
 }
 
 .drop-zone:after {
@@ -90,20 +81,6 @@ main {
     }
 }
 
-@keyframes animateOutline {
-    0% {
-        outline-offset: 4px;
-    }
-
-    75% {
-        outline-offset: 7px;
-    }
-
-    100% {
-        outline-offset: 8px;
-    }
-}
-
 .table__header {
     background-color: #333;
     font-weight: bold;
@@ -124,6 +101,12 @@ main {
 .table__row:not(.table__header):hover {
     background-color: #FBC02D;
     transition: background-color 0.15s ease-in-out;
+}
+.table__row.selected {
+    background-color: #F9A825;
+}
+.table__row.selected:hover {
+    background-color: #F9A825;
 }
 
 .table__cell {

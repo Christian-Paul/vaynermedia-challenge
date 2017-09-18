@@ -29,6 +29,14 @@ function updateCandyStripe() {
 	}
 }
 
+function deselectAllAlbums() {
+	let $selected = $('.selected');
+
+	for(let i = 0; i < $selected.length; i++) {
+		$selected.eq(i).removeClass('selected');
+	}
+}
+
 function albumClickHandler(ev) {
 	// if ctrl was held while clicking, add this album to multiselect
 	if(ev.ctrlKey) {
@@ -36,6 +44,7 @@ function albumClickHandler(ev) {
 		let albumId = $(ev.srcElement).closest('.table__row').attr('id');
 		let tableId = $(ev.srcElement).closest('.table').attr('id');
 		let albumTitle = $(`#${albumId}`).find('div:last-child')[0].innerHTML;
+		let albumHtml = $(ev.srcElement).closest('.table__row')[0].outerHTML;
 
 		// if multiselect is currently storing albums from the clicked table
 		// or isn't storing albums from a particular table
@@ -50,12 +59,19 @@ function albumClickHandler(ev) {
 					...multiSelect.seletedAlbums.slice(0, albumIdx),
 					...multiSelect.seletedAlbums.slice(albumIdx+1)
 				]
-			} else {	
+
+				// remove selected class
+				$(`#${albumId}`).first().removeClass('selected');
+			} else {
 				// if the album isn't already being tracked, add it
 				multiSelect.seletedAlbums.push({
 					albumId: albumId,
-					albumTitle: albumTitle
+					albumTitle: albumTitle,
+					albumHtml: albumHtml
 				});
+
+				// add selected class
+				$(`#${albumId}`).first().addClass('selected');
 			}
 		} else {
 			// if the target album is from a different table
@@ -64,9 +80,13 @@ function albumClickHandler(ev) {
 				seletedTableId: tableId,
 				seletedAlbums: [{
 					albumId: albumId,
-					albumTitle: albumTitle
+					albumTitle: albumTitle,
+					albumHtml: albumHtml
 				}]
 			}
+
+			deselectAllAlbums();
+			$(`#${albumId}`).first().addClass('selected');
 		}
 	}
 }
@@ -79,6 +99,30 @@ function dragstartHandler(ev) {
 	let originUserId = originTableId.split('-')[1];
 	let albumId = ev.srcElement.id;
 	let albumTitle = $(`#${albumId}`).find('div:last-child')[0].innerHTML;
+	let albumHtml = ev.srcElement.outerHTML;
+	let albumData;
+	
+	// if the dragged album is in multiselect, use multiselect data for transaction
+	let albumIdx = multiSelect.seletedAlbums.findIndex(album => album.albumId === albumId);
+	if(albumIdx !== -1) {
+		albumData = multiSelect.seletedAlbums;
+	} else {	
+		// if the dragged album isn't in multiselect, de-select everything
+		multiSelect = {
+			seletedTableId: null,
+			seletedAlbums: []
+		}
+
+		deselectAllAlbums();
+
+		// save album title and id
+		albumData = [{
+			albumId: albumId,
+			albumTitle: albumTitle,
+			albumHtml: albumHtml
+		}];
+	}
+
 
 	// obtain receiving table info
 	let userTables = $('div.table');
@@ -90,15 +134,12 @@ function dragstartHandler(ev) {
 	$receivingTable[0].addEventListener('dragover', dragoverHandler);
 	$receivingTable.addClass('drop-zone');
 
-	// save component's html data and id
-	ev.dataTransfer.setData('text/html', ev.srcElement.outerHTML);
-	ev.dataTransfer.setData('application/json', 
-	                        JSON.stringify({
-	                        	albumId: albumId.split('-')[1],
-	                        	title: albumTitle,
-	                        	originUserId: originUserId,
-	                        	receivingTableId: receivingTableId
-	                        }));
+	let data = {
+		albumData: albumData,
+		originUserId: originUserId
+	};
+
+	ev.dataTransfer.setData('application/json', JSON.stringify(data));
 }
 
 function dragoverHandler(ev) {
@@ -108,34 +149,46 @@ function dragoverHandler(ev) {
 function dropHandler(ev) {
 	ev.preventDefault();
 
-	let htmlData = ev.dataTransfer.getData('text/html');
-	let { albumId, title, originUserId } = JSON.parse(ev.dataTransfer.getData('application/json'));
+	let data = JSON.parse(ev.dataTransfer.getData('application/json'));
+	let { originUserId } = data;
 	let $receivingTable = $(ev.target).closest('.table');
 	let receivingUserId = $receivingTable.attr('id');
-
+	
 	// if dropped in original table, return early
 	if(originUserId === receivingUserId) {
 		return
 	}
 
-	return $.ajax({
-		url: apiAddr + '/albums/' + albumId,
-		method: 'PUT',
-		data: {
-			id: albumId,
-			userId: receivingUserId,
-			title: title
-		}
-	}).done(() => {
-		// if api returns success
-		// remove row from old table and append it to the new one
-		$(`#album-${albumId}`).remove();
-		$receivingTable.append(htmlData);
-		updateCandyStripe();
-	}).fail(() => {
-		// if api update failed, display alert
-		alert('Something went wrong')
-	})
+	let failureMessage = false;
+
+	for(let i = 0; i < data.albumData.length; i++) {
+		let htmlData = data.albumData[i].albumHtml;
+		let albumId = data.albumData[i].albumId.split('-')[1];
+		let albumTitle = data.albumData[i].albumTitle;
+		
+		$.ajax({
+			url: apiAddr + '/albums/' + albumId,
+			method: 'PUT',
+			data: {
+				id: albumId,
+				userId: receivingUserId,
+				albumTitle: albumTitle
+			}
+		}).done(() => {
+			// if api returns success
+			// remove row from old table and append it to the new one
+			$(`#album-${albumId}`).remove();
+			$receivingTable.append(htmlData);
+			updateCandyStripe();
+		}).fail(() => {
+			// if api update failed, display alert
+			// only display alert once per move
+			if(!failureMessage) {
+				alert('Something went wrong');
+				failureMessage = true;
+			}
+		})
+	}
 }
 
 function dragendHandler(ev) {
