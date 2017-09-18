@@ -4,6 +4,7 @@ body {
     background-color: #EFEFEF;
     display: flex;
     flex-direction: column;
+    user-select: none;
 }
 
 main {

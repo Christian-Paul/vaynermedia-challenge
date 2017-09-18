@@ -1,12 +1,13 @@
 const apiAddr = 'https://jsonplaceholder.typicode.com';
 const $document = $(document);
 
-function dragstart_handler(ev) {
+function dragstartHandler(ev) {
 	ev.dataTransfer.dropEffect = 'move';
 
 	// obtain origin table info
 	let originTableId = $(ev.target).closest('.table').attr('id') 
 	let originUserId = originTableId.split('-')[1];
+	let albumId = ev.srcElement.id;
 
 	// obtain receiving table info
 	let userTables = $('div.table');
@@ -14,25 +15,25 @@ function dragstart_handler(ev) {
 	let $receivingTable = $(`#${receivingTableId}`)[0];
 
 	// add event listeners to receiving table
-	$receivingTable.addEventListener('drop', drop_handler);
-	$receivingTable.addEventListener('dragover', dragover_handler);
+	$receivingTable.addEventListener('drop', dropHandler);
+	$receivingTable.addEventListener('dragover', dragoverHandler);
 
 	// save component's html data and id
 	ev.dataTransfer.setData('text/html', ev.srcElement.outerHTML);
 	ev.dataTransfer.setData('application/json', 
 	                        JSON.stringify({
-	                        	albumId: $(ev.srcElement).find('div:first-child')[0].innerHTML,
-	                        	title: $(ev.srcElement).find('div:last-child')[0].innerHTML,
+	                        	albumId: albumId.split('-')[1],
+	                        	title: $(`#${albumId}`).find('div:last-child')[0].innerHTML,
 	                        	originUserId: originUserId,
 	                        	receivingTableId: receivingTableId
 	                        }));
 }
 
-function dragover_handler(ev) {
+function dragoverHandler(ev) {
 	ev.preventDefault();
 }
 
-function drop_handler(ev) {
+function dropHandler(ev) {
 	ev.preventDefault();
 
 	let htmlData = ev.dataTransfer.getData('text/html');
@@ -64,13 +65,13 @@ function drop_handler(ev) {
 	})
 }
 
-function dragend_handler(ev) {
+function dragendHandler(ev) {
 	// remove event handlers from tables and clean up state
 	let $tables = $('.table');
 
 	for(let i = 0; i < $tables.length; i++) {
-		$tables[i].removeEventListener('drop', drop_handler)
-		$tables[i].removeEventListener('dragover', dragover_handler)
+		$tables[i].removeEventListener('drop', dropHandler)
+		$tables[i].removeEventListener('dragover', dragoverHandler)
 	}
 
 	ev.dataTransfer.clearData();
@@ -176,8 +177,8 @@ $(function() {
 				.append(
 					`<div 
 						draggable='true' 
-						ondragstart='dragstart_handler(event);'
-						ondragend='dragend_handler(event);'
+						ondragstart='dragstartHandler(event);'
+						ondragend='dragendHandler(event);'
 						class='${rowClass}'
 						id=${'album-' + albumId}
 					>
@@ -196,8 +197,8 @@ $(function() {
 				.append(
 					`<div 
 						draggable='true' 
-						ondragstart='dragstart_handler(event);'
-						ondragend='dragend_handler(event);'
+						ondragstart='dragstartHandler(event);'
+						ondragend='dragendHandler(event);'
 						class='${rowClass}'
 						id=${'album-' + albumId}
 					>
