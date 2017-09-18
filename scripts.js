@@ -35,11 +35,12 @@ function dragstartHandler(ev) {
 	// obtain receiving table info
 	let userTables = $('div.table');
 	let receivingTableId = userTables[0].id === originTableId ? userTables[1].id : userTables[0].id;
-	let $receivingTable = $(`#${receivingTableId}`)[0];
+	let $receivingTable = $(`#${receivingTableId}`).first();
 
 	// add event listeners to receiving table
-	$receivingTable.addEventListener('drop', dropHandler);
-	$receivingTable.addEventListener('dragover', dragoverHandler);
+	$receivingTable[0].addEventListener('drop', dropHandler);
+	$receivingTable[0].addEventListener('dragover', dragoverHandler);
+	$receivingTable.addClass('drop-zone');
 
 	// save component's html data and id
 	ev.dataTransfer.setData('text/html', ev.srcElement.outerHTML);
@@ -96,6 +97,7 @@ function dragendHandler(ev) {
 	for(let i = 0; i < $tables.length; i++) {
 		$tables[i].removeEventListener('drop', dropHandler)
 		$tables[i].removeEventListener('dragover', dragoverHandler)
+		$tables.eq(i).removeClass('drop-zone');
 	}
 
 	ev.dataTransfer.clearData();
