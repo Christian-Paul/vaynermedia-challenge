@@ -57,6 +57,13 @@ main {
 .table__row:last-child {
     border-bottom: 0
 }
+.red-row {
+    background-color: #EF5350;
+}
+.table__row:not(.table__header):hover {
+    background-color: #FBC02D;
+    transition: background-color 0.15s ease-in-out;
+}
 
 .table__cell {
     margin-right: 10px;

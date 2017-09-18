@@ -78,14 +78,23 @@ function dragend_handler(ev) {
 
 function filterAlbums(tableRows, searchText) {
 	// iterate through each row, searching for albums that don't match
+	let visibleIdx = 0;
 	for(let i = 0; i < tableRows.length; i++) {
 		let row = tableRows[i];
 		let rowAlbumName = $(row).find(':last-child')[0].innerHTML.toLowerCase();
 
 		// if an album name doesn't match search, hide it
 		$(row).removeClass('hidden');
+		$(row).removeClass('red-row');
 		if(rowAlbumName.indexOf(searchText) === -1) {
 			$(row).addClass('hidden');
+
+		} else {
+			// make odd numbered visible rows red
+			if(visibleIdx % 2) {
+				$(row).addClass('red-row');
+			}
+			visibleIdx++;
 		}
 	}
 }
@@ -121,7 +130,7 @@ function searchButtonClick(ev) {
 
 	let tableRows = $(targetTable).find('.table__row:not(.table__header)')
 
-	filterAlbumsHandler(tableRows, searchText);
+	filterAlbums(tableRows, searchText);
 }
 
 $(function() {
@@ -161,6 +170,7 @@ $(function() {
 		for(let i = 0; i < album1[0].length; i++) {
 
 			let albumId = album1[0][i]['id'];
+			let rowClass = i % 2 ? 'table__row red-row' : 'table__row';
 
 			$firstTable
 				.append(
@@ -168,7 +178,7 @@ $(function() {
 						draggable='true' 
 						ondragstart='dragstart_handler(event);'
 						ondragend='dragend_handler(event);'
-						class='table__row'
+						class='${rowClass}'
 						id=${'album-' + albumId}
 					>
 						<div class='table__cell table__cell--short'>${albumId}</div>
@@ -180,6 +190,7 @@ $(function() {
 		for(let i = 0; i < album2[0].length; i++) {
 
 			let albumId = album2[0][i]['id'];
+			let rowClass = i % 2 ? 'table__row red-row' : 'table__row';
 
 			$secondTable
 				.append(
@@ -187,7 +198,7 @@ $(function() {
 						draggable='true' 
 						ondragstart='dragstart_handler(event);'
 						ondragend='dragend_handler(event);'
-						class='table__row'
+						class='${rowClass}'
 						id=${'album-' + albumId}
 					>
 						<div class='table__cell table__cell--short'>${albumId}</div>
