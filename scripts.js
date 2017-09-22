@@ -1,35 +1,93 @@
 const apiAddr = 'https://jsonplaceholder.typicode.com';
 const $document = $(document);
-let $firstTable, $secondTable;
+let $tables;
 let $userSelectLeft, $userSelectRight;
+
+class AlbumApp {
+	constructor(userIds = [], currentUsers = []) {
+		this.allUsers = userIds,
+		this.currentUsers = currentUsers
+	}
+
+	getCurrentUsers() {
+		return this.currentUsers;
+	}
+
+	getAllUsers() {
+		return this.allUsers;
+	}
+
+	setAllUsers(allUsers) {
+		this.allUsers = allUsers;
+	}
+
+	setCurrentUsers(currentUsers) {
+		this.currentUsers = currentUsers;
+	}
+
+	updateCurrentUser(idx, newUser) {
+		this.currentUsers[idx] = newUser;
+	}
+}
+
+let MyAlbumApp = new AlbumApp();
 
 let multiSelect = {
 	seletedTableId: null,
 	seletedAlbums: []
 }
 
-function updateLeftUser() {
-	let userId = $('.user-select-left').val();
+// fill dropdowns with user options
+function populateDropdown() {
+	// clear dropdowns
+	$userSelectLeft.empty();
+	$userSelectRight.empty();
+
+	let [user1, user2] = MyAlbumApp.getCurrentUsers();
+	let allUsers = MyAlbumApp.getAllUsers();
+
+	for(let i = 0; i < allUsers.length; i++) {
+		let username = allUsers[i].username;
+		let userId = allUsers[i].id;
+		let leftSelected = userId === user1.id;
+		let rightSelected = userId === user2.id;
+
+		// don't give users the option of selecting a user that's selected elsewhere
+		if(userId !== user2.id) {
+			$userSelectLeft.append(`
+				<option value=${userId} ${leftSelected && 'selected'}>
+					${username}
+				</option>
+			`)
+		}
+
+		if(userId !== user1.id) {
+			$userSelectRight.append(`
+				<option value=${userId} ${rightSelected && 'selected'}>
+					${username}
+				</option>
+			`)
+		}
+	}
+}
+
+// on selecting a new change user
+// update the table data and the dropdown options 
+function handleDropdownChange(event) {
+	let userId = $(event.target).val();
+	let tableIdx = $(event.target).hasClass('user-select-left') ? 0 : 1;
 
 	$.when(
 		$.get(apiAddr + `/users/${userId}`),
 		$.get(apiAddr + `/albums?userId=${userId}`)
 	).done((user, album) => {
-		populateTable($firstTable, user, album);
-	})
+		MyAlbumApp.updateCurrentUser(tableIdx, user[0]);
+		populateDropdown();
+		populateTable($tables[tableIdx], user, album);
+	});
 }
 
-function updateRightUser() {
-	let userId = $('.user-select-right').val();
-
-	$.when(
-		$.get(apiAddr + `/users/${userId}`),
-		$.get(apiAddr + `/albums?userId=${userId}`)
-	).done((user, album) => {
-		populateTable($secondTable, user, album);
-	})
-}
-
+// populate a table with data from API
 function populateTable(table, user, album) {
 	// set table id to userId
 	table.attr('id', `user-${user[0].id}`);
@@ -58,6 +116,7 @@ function populateTable(table, user, album) {
 	}
 }
 
+// update candy stripe style
 function updateCandyStripe() {
 	let leftTableRows = $('.table').first().find('.table__row:not(.table__header)');
 	let rightTableRows = $('.table').last().find('.table__row:not(.table__header)');
@@ -81,6 +140,7 @@ function updateCandyStripe() {
 	}
 }
 
+// deselect all albums
 function deselectAllAlbums() {
 	let $selected = $('.selected');
 
@@ -89,6 +149,7 @@ function deselectAllAlbums() {
 	}
 }
 
+// handle clicking on an album to select multiple albums at once
 function albumClickHandler(ev) {
 	// if ctrl was held while clicking, add this album to multiselect
 	if(ev.ctrlKey) {
@@ -143,6 +204,7 @@ function albumClickHandler(ev) {
 	}
 }
 
+// handle starting a drag event
 function dragstartHandler(ev) {
 	ev.dataTransfer.dropEffect = 'move';
 
@@ -194,10 +256,12 @@ function dragstartHandler(ev) {
 	ev.dataTransfer.setData('application/json', JSON.stringify(data));
 }
 
+// prevent default behavior on dragging an album
 function dragoverHandler(ev) {
 	ev.preventDefault();
 }
 
+// handle an album being dropped
 function dropHandler(ev) {
 	ev.preventDefault();
 
@@ -243,8 +307,8 @@ function dropHandler(ev) {
 	}
 }
 
+// remove event handlers from tables and clean up state
 function dragendHandler(ev) {
-	// remove event handlers from tables and clean up state
 	let $tables = $('.table');
 
 	for(let i = 0; i < $tables.length; i++) {
@@ -256,6 +320,7 @@ function dragendHandler(ev) {
 	ev.dataTransfer.clearData();
 }
 
+// update which albums are visible
 function filterAlbums(tableRows, searchText) {
 	// iterate through each row, searching for albums that don't match
 	let visibleIdx = 0;
@@ -279,6 +344,7 @@ function filterAlbums(tableRows, searchText) {
 	}
 }
 
+// on search click, obtain relevant table and search data
 function searchInputKeyPress(ev) {
 	// get relevant table, rows, and search text
 	if(ev.key === 'Enter') {
@@ -297,6 +363,7 @@ function searchInputKeyPress(ev) {
 	}
 }
 
+
 function searchButtonClick(ev) {
 	// get relevant table, rows, and search text
 	let targetTable, searchText;
@@ -313,7 +380,7 @@ function searchButtonClick(ev) {
 	filterAlbums(tableRows, searchText);
 }
 
-$(function() {
+$(document).ready(function() {
 	// add search event listener for filtering
 	let $searchButtons = $('.search__button');
 	for(let i = 0; i < $searchButtons.length; i++) {
@@ -326,6 +393,12 @@ $(function() {
 		$searchInputs[i].addEventListener('keypress', searchInputKeyPress);
 	}
 
+	// add change event listener for selecting different users
+	let $dropDowns = $('.user-select');
+	for(let i = 0; i < $dropDowns.length; i++) {
+		$dropDowns[i].addEventListener('change', (event) => handleDropdownChange(event));
+	}
+
 	// get user and album data concurrently
 	$.when(
 		$.get(apiAddr + '/users/1'),
@@ -335,32 +408,19 @@ $(function() {
 		$.get(apiAddr + '/users')
 	).done((user1, user2, album1, album2, allUsers) => {
 
-		$firstTable = $('main > div.table:first-child');
-		$secondTable = $('main > div.table:last-child');
+		// set initial MyAlbumApp values
+		let currentUsers = [user1[0], user2[0]];
+		MyAlbumApp.setAllUsers(allUsers[0]);
+		MyAlbumApp.setCurrentUsers(currentUsers);
+
+		// grab tables and dropdowns
+		$tables = [$('main > div.table:first-child'), $('main > div.table:last-child')];
 		$userSelectLeft = $('.user-select-left');
 		$userSelectRight = $('.user-select-right');
 
-
-		for(let i = 0; i < allUsers[0].length; i++) {
-			let username = allUsers[0][i].username;
-			let userId = allUsers[0][i].id;
-			let leftSelected = userId === user1[0].id;
-			let rightSelected = userId === user2[0].id;
-
-			$userSelectLeft.append(`
-				<option value=${userId} ${leftSelected && 'selected'}>
-					${username}
-				</option>
-			`)
-
-			$userSelectRight.append(`
-				<option value=${userId} ${rightSelected && 'selected'}>
-					${username}
-				</option>
-			`)
-		}
-
-		populateTable($firstTable, user1, album1);
-		populateTable($secondTable, user2, album2);
+		// fill dropdown and tables with data
+		populateDropdown();
+		populateTable($tables[0], user1, album1);
+		populateTable($tables[1], user2, album2);
 	})
 });
