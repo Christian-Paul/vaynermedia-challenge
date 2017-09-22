@@ -1,9 +1,61 @@
 const apiAddr = 'https://jsonplaceholder.typicode.com';
 const $document = $(document);
+let $firstTable, $secondTable;
+let $userSelectLeft, $userSelectRight;
 
 let multiSelect = {
 	seletedTableId: null,
 	seletedAlbums: []
+}
+
+function updateLeftUser() {
+	let userId = $('.user-select-left').val();
+
+	$.when(
+		$.get(apiAddr + `/users/${userId}`),
+		$.get(apiAddr + `/albums?userId=${userId}`)
+	).done((user, album) => {
+		populateTable($firstTable, user, album);
+	})
+}
+
+function updateRightUser() {
+	let userId = $('.user-select-right').val();
+
+	$.when(
+		$.get(apiAddr + `/users/${userId}`),
+		$.get(apiAddr + `/albums?userId=${userId}`)
+	).done((user, album) => {
+		populateTable($secondTable, user, album);
+	})
+}
+
+function populateTable(table, user, album) {
+	// set table id to userId
+	table.attr('id', `user-${user[0].id}`);
+	table.empty();
+
+	// populate tables with album data
+	for(let i = 0; i < album[0].length; i++) {
+
+		let albumId = album[0][i]['id'];
+		let rowClass = i % 2 ? 'table__row red-row' : 'table__row';
+
+		table
+			.append(
+				`<div 
+					draggable='true' 
+					ondragstart='dragstartHandler(event);'
+					ondragend='dragendHandler(event);'
+					onclick='albumClickHandler(event);'
+					class='${rowClass}'
+					id=${'album-' + albumId}
+				>
+					<div class='table__cell table__cell--short'>${albumId}</div>
+					<div class='table__cell'>${album[0][i]['title']}</div>
+				</div>`
+			);
+	}
 }
 
 function updateCandyStripe() {
@@ -274,68 +326,41 @@ $(function() {
 		$searchInputs[i].addEventListener('keypress', searchInputKeyPress);
 	}
 
-	// get user and album data concurrently 
+	// get user and album data concurrently
 	$.when(
 		$.get(apiAddr + '/users/1'),
 		$.get(apiAddr + '/users/2'),
 		$.get(apiAddr + '/albums?userId=1'),
-		$.get(apiAddr + '/albums?userId=2')
-	).done((user1, user2, album1, album2) => {
+		$.get(apiAddr + '/albums?userId=2'),
+		$.get(apiAddr + '/users')
+	).done((user1, user2, album1, album2, allUsers) => {
 
-		// when all data is obtained, then update UI
-		// this is so the UI doesn't start displaying data
-		// until all data is received, preventing an inaccurate UI
-		let $firstTable = $('main > div.table:first-child');
-		let $secondTable = $('main > div.table:last-child');
-
-
-		// set table id to userId
-		$firstTable.attr('id', `user-${user1[0].id}`);
-		$secondTable.attr('id', `user-${user2[0].id}`);
+		$firstTable = $('main > div.table:first-child');
+		$secondTable = $('main > div.table:last-child');
+		$userSelectLeft = $('.user-select-left');
+		$userSelectRight = $('.user-select-right');
 
 
-		// populate tables with album data
-		for(let i = 0; i < album1[0].length; i++) {
+		for(let i = 0; i < allUsers[0].length; i++) {
+			let username = allUsers[0][i].username;
+			let userId = allUsers[0][i].id;
+			let leftSelected = userId === user1[0].id;
+			let rightSelected = userId === user2[0].id;
 
-			let albumId = album1[0][i]['id'];
-			let rowClass = i % 2 ? 'table__row red-row' : 'table__row';
+			$userSelectLeft.append(`
+				<option value=${userId} ${leftSelected && 'selected'}>
+					${username}
+				</option>
+			`)
 
-			$firstTable
-				.append(
-					`<div 
-						draggable='true' 
-						ondragstart='dragstartHandler(event);'
-						ondragend='dragendHandler(event);'
-						onclick='albumClickHandler(event);'
-						class='${rowClass}'
-						id=${'album-' + albumId}
-					>
-						<div class='table__cell table__cell--short'>${albumId}</div>
-						<div class='table__cell'>${album1[0][i]['title']}</div>
-					</div>`
-				);
+			$userSelectRight.append(`
+				<option value=${userId} ${rightSelected && 'selected'}>
+					${username}
+				</option>
+			`)
 		}
 
-		for(let i = 0; i < album2[0].length; i++) {
-
-			let albumId = album2[0][i]['id'];
-			let rowClass = i % 2 ? 'table__row red-row' : 'table__row';
-
-			$secondTable
-				.append(
-					`<div 
-						draggable='true' 
-						ondragstart='dragstartHandler(event);'
-						ondragend='dragendHandler(event);'
-						onclick='albumClickHandler(event);'
-						class='${rowClass}'
-						id=${'album-' + albumId}
-					>
-						<div class='table__cell table__cell--short'>${albumId}</div>
-						<div class='table__cell'>${album2[0][i]['title']}</div>
-					</div>`
-				);
-		}
+		populateTable($firstTable, user1, album1);
+		populateTable($secondTable, user2, album2);
 	})
-
 });

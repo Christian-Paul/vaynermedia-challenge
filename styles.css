@@ -37,7 +37,20 @@ main {
     background-color: white;
 }
 
-
+.user-dropdowns {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0rem;
+}
+.dropdown-container {
+    width: 48%;
+    display: flex;
+    justify-content: center;     
+}
+.user-select-left, .user-select-right {
+    border: none;
+    background: transparent;
+}
 
 .table {
     width: 48%;
